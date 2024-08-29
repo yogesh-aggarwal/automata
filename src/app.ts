@@ -18,6 +18,8 @@ app.use("/auth", authRouter)
 const port = process.env.PORT || 3000
 
 schedule("*/30 * * * * *", async () => {
+	console.log("Starting to reply to emails")
+
 	const gmail = google.gmail({ version: "v1" })
 	const users = (await AuthModel.find()).map((x) => x.toObject())
 

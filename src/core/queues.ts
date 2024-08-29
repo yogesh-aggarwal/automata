@@ -121,7 +121,10 @@ namespace WorkerFn {
 				return data
 			}) ?? []
 
+		console.log(threadMessages)
+
 		const response = await emailParsing(threadMessages)
+		console.log(response)
 
 		// Process the response
 		const jobs = []
@@ -129,6 +132,16 @@ namespace WorkerFn {
 		if (response.reply)
 			jobs.push(sendReply(threadID, response.reply, accessToken))
 		await Promise.all(jobs)
+
+		// Mark the thread as read
+		await gmail.users.threads.modify({
+			userId: "me",
+			id: threadID,
+			access_token: accessToken,
+			requestBody: {
+				removeLabelIds: ["UNREAD"],
+			},
+		})
 	}
 }
 
