@@ -1,3 +1,6 @@
+import * as dotenv from "dotenv"
+dotenv.config()
+
 import { LLMResponse_t, ParsedEmail_t } from "./emailParsing.types"
 import { askLLM } from "./openai"
 

@@ -1,3 +1,6 @@
+import * as dotenv from "dotenv"
+dotenv.config()
+
 import OpenAI from "openai"
 
 const client = new OpenAI({

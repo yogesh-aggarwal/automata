@@ -1,3 +1,6 @@
+import * as dotenv from "dotenv"
+dotenv.config()
+
 import { Router } from "express"
 import { OAuth2Client } from "google-auth-library"
 import mongoose from "mongoose"
