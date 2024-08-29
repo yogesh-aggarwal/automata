@@ -3,6 +3,7 @@ dotenv.config()
 
 import express from "express"
 import { google } from "googleapis"
+import mongoose from "mongoose"
 import { schedule } from "node-cron"
 import { processNewEmailQueue } from "./core/queues"
 import { AuthModel } from "./models/auth"
@@ -16,7 +17,7 @@ app.use("/auth", authRouter)
 
 const port = process.env.PORT || 3000
 
-schedule("10 0 * * *", async () => {
+schedule("5 0 * * *", async () => {
 	const gmail = google.gmail({ version: "v1" })
 	const users = (await AuthModel.find()).map((x) => x.toObject())
 
@@ -36,11 +37,14 @@ schedule("10 0 * * *", async () => {
 		)
 	})
 
+	console.log(newEmails)
+
 	processNewEmailQueue.addBulk(
 		newEmails.map((x) => ({ name: "processNewEmail", data: x }))
 	)
 })
 
-app.listen(port, () => {
+app.listen(port, async () => {
+	await mongoose.connect(process.env.MONGODB_URI ?? "")
 	console.log(`Server is running on http://localhost:${port}`)
 })

@@ -10,7 +10,6 @@ const tokenSchema = new mongoose.Schema({
 
 const schema = new mongoose.Schema({
 	_id: mongoose.Types.ObjectId,
-	email: String,
 	tokens: tokenSchema,
 })
 
