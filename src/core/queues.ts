@@ -25,16 +25,20 @@ namespace WorkerFn {
 
 		// Create label if it doesn't exist
 		if (!labelId) {
-			const labelRes = await gmail.users.labels.create({
-				userId: "me",
-				access_token: accessToken,
-				requestBody: {
-					name: label,
-					labelListVisibility: "labelShow",
-					messageListVisibility: "show",
-				},
-			})
-			labelId = labelRes.data.id
+			try {
+				const labelRes = await gmail.users.labels.create({
+					userId: "me",
+					access_token: accessToken,
+					requestBody: {
+						name: label,
+						labelListVisibility: "labelShow",
+						messageListVisibility: "show",
+					},
+				})
+				labelId = labelRes.data.id
+			} catch (e) {
+				console.log(e)
+			}
 		}
 		if (!labelId) return
 
