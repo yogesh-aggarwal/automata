@@ -35,8 +35,7 @@ authRouter.get("/google/callback", async (req, res) => {
 
 		await new AuthModel({
 			_id: new mongoose.Types.ObjectId(),
-			email: "",
-			...tokens,
+			tokens: tokens,
 		}).save()
 
 		console.log(tokens)
