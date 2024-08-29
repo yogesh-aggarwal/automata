@@ -2,9 +2,12 @@ import * as dotenv from "dotenv"
 dotenv.config()
 
 import express from "express"
+import { google } from "googleapis"
+import { schedule } from "node-cron"
+import { processNewEmailQueue } from "./core/queues"
+import { AuthModel } from "./models/auth"
 import { authRouter } from "./routes/auth"
 import { rootLogin } from "./routes/login"
-import { google } from "googleapis"
 
 const app = express()
 
@@ -13,20 +16,30 @@ app.use("/auth", authRouter)
 
 const port = process.env.PORT || 3000
 
-const gmail = google.gmail({ version: "v1", auth })
-gmail.users.watch(
-	{
-		userId: "me",
-		requestBody: {
-			labelIds: ["INBOX"],
-			topicName: "projects/YOUR_PROJECT_ID/topics/YOUR_TOPIC_NAME",
-		},
-	},
-	(err, res) => {
-		if (err) return console.error("The API returned an error: " + err)
-		console.log("Watch response:", res.data)
-	}
-)
+schedule("10 0 * * *", async () => {
+	const gmail = google.gmail({ version: "v1" })
+	const users = (await AuthModel.find()).map((x) => x.toObject())
+
+	const newEmails = users.map(async (x) => {
+		const mesages = await gmail.users.threads.list({
+			userId: "me",
+			access_token: x.tokens?.access_token ?? "",
+			q: "is:unread",
+		})
+		return (
+			mesages.data.threads?.map((y) => {
+				return {
+					threadID: y.id,
+					accessToken: x.tokens?.access_token ?? "",
+				}
+			}) ?? []
+		)
+	})
+
+	processNewEmailQueue.addBulk(
+		newEmails.map((x) => ({ name: "processNewEmail", data: x }))
+	)
+})
 
 app.listen(port, () => {
 	console.log(`Server is running on http://localhost:${port}`)
