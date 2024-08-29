@@ -6,18 +6,26 @@ import { ParsedEmail_t } from "../services/emailParsing.types"
 
 const REDIS_URI = process.env.REDIS_URI
 
-namespace WorkerFn {
-	async function assignLabel(threadID: string, label: string, auth: any) {
-		const gmail = google.gmail({ version: "v1", auth })
+const gmail = google.gmail({ version: "v1" })
 
+namespace WorkerFn {
+	async function assignLabel(
+		threadID: string,
+		label: string,
+		accessToken: string
+	) {
 		// Get all labels
-		const res = await gmail.users.labels.list({ userId: "me" })
+		const res = await gmail.users.labels.list({
+			userId: "me",
+			access_token: accessToken,
+		})
 		let labelId = res.data.labels?.find((l) => l.name === label)?.id
 
 		// Create label if it doesn't exist
 		if (!labelId) {
 			const labelRes = await gmail.users.labels.create({
 				userId: "me",
+				access_token: accessToken,
 				requestBody: {
 					name: label,
 					labelListVisibility: "labelShow",
@@ -32,19 +40,23 @@ namespace WorkerFn {
 		await gmail.users.threads.modify({
 			userId: "me",
 			id: threadID,
+			access_token: accessToken,
 			requestBody: {
 				addLabelIds: [labelId],
 			},
 		})
 	}
 
-	async function sendReply(threadID: string, reply: string, auth: any) {
-		const gmail = google.gmail({ version: "v1", auth })
-
+	async function sendReply(
+		threadID: string,
+		reply: string,
+		accessToken: string
+	) {
 		// Get the thread to find the last message
 		const thread = await gmail.users.threads.get({
 			userId: "me",
 			id: threadID,
+			access_token: accessToken,
 		})
 
 		const lastMessage = thread.data.messages?.pop()
@@ -72,13 +84,13 @@ namespace WorkerFn {
 
 		await gmail.users.messages.send({
 			userId: "me",
+			access_token: accessToken,
 			requestBody: {
 				raw: encodedMessage,
 				threadId: threadID,
 			},
 		})
 	}
-
 
 	export async function processNewEmail(job: Job<any, any, string>) {
 		const threadID: string = job.data.threadID
@@ -88,8 +100,6 @@ namespace WorkerFn {
 
 		const accessToken = tokens.toObject().tokens?.access_token
 		if (!accessToken) return
-
-		const gmail = google.gmail({ version: "v1" })
 
 		const thread = await gmail.users.threads.get({
 			id: threadID,
@@ -114,10 +124,9 @@ namespace WorkerFn {
 
 		// Process the response
 		const jobs = []
-		// Apply label
-		jobs.push(assignLabel(threadID, response.label))
-		// Send reply (if applicable)
-		if (response.reply) jobs.push(sendReply(threadID, response.reply))
+		jobs.push(assignLabel(threadID, response.label, accessToken))
+		if (response.reply)
+			jobs.push(sendReply(threadID, response.reply, accessToken))
 		await Promise.all(jobs)
 	}
 }
