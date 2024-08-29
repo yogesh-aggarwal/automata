@@ -1,3 +1,6 @@
+import * as dotenv from "dotenv"
+dotenv.config()
+
 import { Job, Queue, Worker } from "bullmq"
 import { google } from "googleapis"
 import { emailParsing } from "../services/emailParsing"
