@@ -132,15 +132,15 @@ namespace WorkerFn {
 }
 
 export const processNewEmailQueue = new Queue("processNewEmail", {
-	connection: {
-		host: REDIS_URI,
+   connection: {
+      host: REDIS_URI,
 		port: 6379,
 	},
 })
 
-export const worker = new Worker("processNewEmail", WorkerFn.processNewEmail, {
-	connection: {
-		host: REDIS_URI,
-		port: 6379,
-	},
+const worker = new Worker("processNewEmail", WorkerFn.processNewEmail, {
+   connection: {
+      host: REDIS_URI,
+      port: 6379,
+   },
 })
