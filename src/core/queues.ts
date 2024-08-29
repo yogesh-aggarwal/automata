@@ -1,6 +1,5 @@
 import { Job, Queue, Worker } from "bullmq"
 import { google } from "googleapis"
-import { AuthModel } from "../models/auth"
 import { emailParsing } from "../services/emailParsing"
 import { ParsedEmail_t } from "../services/emailParsing.types"
 
@@ -94,12 +93,7 @@ namespace WorkerFn {
 
 	export async function processNewEmail(job: Job<any, any, string>) {
 		const threadID: string = job.data.threadID
-
-		const tokens = await AuthModel.findOne({ email: "YOUR_EMAIL" })
-		if (!tokens) return
-
-		const accessToken = tokens.toObject().tokens?.access_token
-		if (!accessToken) return
+		const accessToken: string = job.data.accessToken
 
 		const thread = await gmail.users.threads.get({
 			id: threadID,
@@ -132,15 +126,15 @@ namespace WorkerFn {
 }
 
 export const processNewEmailQueue = new Queue("processNewEmail", {
-   connection: {
-      host: REDIS_URI,
+	connection: {
+		host: REDIS_URI,
 		port: 6379,
 	},
 })
 
-const worker = new Worker("processNewEmail", WorkerFn.processNewEmail, {
-   connection: {
-      host: REDIS_URI,
-      port: 6379,
-   },
+new Worker("processNewEmail", WorkerFn.processNewEmail, {
+	connection: {
+		host: REDIS_URI,
+		port: 6379,
+	},
 })
