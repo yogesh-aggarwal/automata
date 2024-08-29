@@ -20,7 +20,7 @@ In addition to dad you will also need to be labelling the email only & only from
 
 The user will be providing you with the content of the email basically a whole thread and you will be providing me the response in the following format:
 --- 
-{"reply": reply_in_string | null, "label": most_appropriate_label} 
+{"reply": reply_in_string | null, "label": most_appropriate_label}
 ---
 
 Don't say literally anything else other than the above JSON.
